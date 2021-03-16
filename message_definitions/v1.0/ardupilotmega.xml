@@ -994,6 +994,7 @@
       <entry value="22" name="PLANE_MODE_QAUTOTUNE"/>
       <entry value="23" name="PLANE_MODE_QACRO"/>
       <entry value="24" name="PLANE_MODE_THERMAL"/>
+      <entry value="25" name="PLANE_MODE_HITTARGET"/>
     </enum>
     <enum name="COPTER_MODE">
       <description>A mapping of copter flight modes for custom_mode field of heartbeat.</description>

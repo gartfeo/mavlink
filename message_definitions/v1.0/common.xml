@@ -1094,6 +1094,15 @@
         <param index="6">Empty</param>
         <param index="7">Empty</param>
       </entry>
+      <entry value="200213" name="MAV_CMD_NAV_SET_PITCH" hasLocation="false" isDestination="false">
+        <description>Sets a desired plane down or up angle.</description>
+        <param index="1" label="Pitch" units="deg">Pitch angle to adjust nose by.</param>
+        <param index="2" label="Angle" minValue="0" maxValue="1" increment="1">Final angle. (0=absolute, 1=relative)</param>
+        <param index="4">Empty</param>
+        <param index="5">Empty</param>
+        <param index="6">Empty</param>
+        <param index="7">Empty</param>
+      </entry>
       <entry value="214" name="MAV_CMD_DO_SET_CAM_TRIGG_INTERVAL" hasLocation="false" isDestination="false">
         <description>Mission command to set camera trigger interval for this flight. If triggering is enabled, the camera is triggered each time this interval expires. This command can also be used to set the shutter integration time for the camera.</description>
         <param index="1" label="Trigger Cycle" units="ms" minValue="-1" increment="1">Camera trigger cycle time. -1 or 0 to ignore.</param>

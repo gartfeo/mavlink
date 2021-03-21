@@ -1094,7 +1094,7 @@
         <param index="6">Empty</param>
         <param index="7">Empty</param>
       </entry>
-      <entry value="200213" name="MAV_CMD_NAV_SET_PITCH" hasLocation="false" isDestination="false">
+      <entry value="217" name="MAV_CMD_NAV_SET_PITCH" hasLocation="false" isDestination="false">
         <description>Sets a desired plane down or up angle.</description>
         <param index="1" label="Pitch" units="deg">Pitch angle to adjust nose by.</param>
         <param index="2" label="Angle" minValue="0" maxValue="1" increment="1">Final angle. (0=absolute, 1=relative)</param>

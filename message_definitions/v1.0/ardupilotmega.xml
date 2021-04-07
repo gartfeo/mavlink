@@ -1467,14 +1467,10 @@
       <field type="float" name="cross_track_error" units="m">Deepstall cross track error (only valid when in DEEPSTALL_STAGE_LAND).</field>
       <field type="uint8_t" name="stage" enum="DEEPSTALL_STAGE">Deepstall stage.</field>
     </message>
-    <message id="199" name="MAV_CMD_NAV_SET_PITCH" hasLocation="false" isDestination="false">
+    <message id="199" name="MAV_CMD_NAV_SET_PITCH">
       <description>Sets a desired plane down or up angle.</description>
-      <param index="1" name="pitch_angle" label="Pitch" units="deg">Pitch angle to adjust nose by.</param>
-      <param index="2" name="pitch_mode" label="Mode" minValue="0" maxValue="1" increment="1">Final angle. (0=absolute, 1=relative)</param>
-      <param index="4">Empty</param>
-      <param index="5">Empty</param>
-      <param index="6">Empty</param>
-      <param index="7">Empty</param>
+      <field type="float" name="pitch_angle" units="deg">Pitch angle to adjust nose by.</field>
+      <field type="uint8_t" name="pitch_mode">Final angle. (0=absolute, 1=relative)</field>
     </message>
     <message id="200" name="GIMBAL_REPORT">
       <description>3 axis gimbal measurements.</description>

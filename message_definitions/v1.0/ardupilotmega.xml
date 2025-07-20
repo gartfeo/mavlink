@@ -2057,72 +2057,72 @@
       <field type="uint16_t[4]" name="rpm" units="rpm">RPM (eRPM).</field>
       <field type="uint16_t[4]" name="count">count of telemetry packets received (wraps at 65535).</field>
     </message>
-      <message id="15001" name="CHECK_IN">
-        <description>Check in</description>
-        <field type="uint8_t" name="sid"/>
-      </message>
-    <message id="15002" name="CHECK_OUT">
+    <message id="25001" name="LOG_STATUS">
+      <description>Log status</description>
+      <field type="uint8_t" name="sid"/>
+      <field type="uint8_t" name="rid"/>
+      <field type="char[50]" name="status"/>
+    </message>
+    <message id="25002" name="CHECK_IN">
+      <description>Check in</description>
+      <field type="uint8_t" name="sid"/>
+    </message>
+    <message id="25003" name="CHECK_OUT">
       <description>Check out</description>
       <field type="uint8_t" name="sid"/>
       <field type="float" name="lat"/>
       <field type="float" name="lng"/>
       <field type="float" name="alt"/>
     </message>
-      <message id="15003" name="LOG_STATUS">
-        <description>Log status</description>
-        <field type="uint8_t" name="sid"/>
-        <field type="uint8_t" name="rid"/>
-        <field type="char[50]" name="status"/>
-      </message>
-      <message id="15004" name="AVAILABLE_TASK_REQUEST">
-        <description>Available task request</description>
-        <field type="uint8_t" name="sid"/>
-        <field type="uint8_t" name="count"/>
-        <field type="uint16_t[5]" name="task_id"/>
-        <field type="uint8_t[5]" name="task_type"/>
-        <field type="float[5]" name="lat"/>
-        <field type="float[5]" name="lng"/>
-        <field type="float[5]" name="alt"/>
-      </message>
-      <message id="15005" name="AVAILABLE_TASK_RESPONSE">
-        <description>Available task response</description>
-        <field type="uint8_t" name="sid"/>
-        <field type="uint8_t" name="rid"/>
-        <field type="uint8_t" name="count"/>
-        <field type="uint16_t[5]" name="task_id"/>
-        <field type="float[5]" name="time"/>
-      </message>
-      <message id="15006" name="TASK_ASSIGN_REQUEST">
-        <description>Task assign request</description>
-        <field type="uint8_t" name="sid"/>
-        <field type="uint8_t" name="rid"/>
-        <field type="uint16_t" name="task_id"/>
-        <field type="uint8_t" name="task_type"/>
-        <field type="float" name="lat"/>
-        <field type="float" name="lng"/>
-        <field type="float" name="alt"/>
-      </message>
-      <message id="15007" name="TASK_ASSIGN_RESPONSE">
-        <description>Task assign response</description>
-        <field type="uint8_t" name="sid"/>
-        <field type="uint8_t" name="rid"/>
-        <field type="uint16_t" name="task_id"/>
-        <field type="uint8_t" name="accepted"/>
-      </message>
-      <message id="15008" name="TASK_CONFIRM_REQUEST">
-        <description>Task confirm request</description>
-        <field type="uint8_t" name="sid"/>
-        <field type="uint16_t" name="task_id"/>
-        <field type="uint8_t" name="task_type"/>
-        <field type="float" name="lat"/>
-        <field type="float" name="lng"/>
-        <field type="float" name="alt"/>
-      </message>
-      <message id="15009" name="TASK_CONFIRM_RESPONSE">
-        <description>Task confirm response</description>
-        <field type="uint8_t" name="rid"/>
-        <field type="uint16_t" name="task_id"/>
-        <field type="uint8_t" name="confirmed"/>
-      </message>
+    <message id="25104" name="AVAILABLE_TASK_REQUEST">
+      <description>Available task request</description>
+      <field type="uint8_t" name="sid"/>
+      <field type="uint8_t" name="count"/>
+      <field type="uint16_t[5]" name="task_id"/>
+      <field type="uint8_t[5]" name="task_type"/>
+      <field type="float[5]" name="lat"/>
+      <field type="float[5]" name="lng"/>
+      <field type="float[5]" name="alt"/>
+    </message>
+    <message id="25105" name="AVAILABLE_TASK_RESPONSE">
+      <description>Available task response</description>
+      <field type="uint8_t" name="sid"/>
+      <field type="uint8_t" name="rid"/>
+      <field type="uint8_t" name="count"/>
+      <field type="uint16_t[5]" name="task_id"/>
+      <field type="float[5]" name="time"/>
+    </message>
+    <message id="25106" name="TASK_ASSIGN_REQUEST">
+      <description>Task assign request</description>
+      <field type="uint8_t" name="sid"/>
+      <field type="uint8_t" name="rid"/>
+      <field type="uint16_t" name="task_id"/>
+      <field type="uint8_t" name="task_type"/>
+      <field type="float" name="lat"/>
+      <field type="float" name="lng"/>
+      <field type="float" name="alt"/>
+    </message>
+    <message id="25107" name="TASK_ASSIGN_RESPONSE">
+      <description>Task assign response</description>
+      <field type="uint8_t" name="sid"/>
+      <field type="uint8_t" name="rid"/>
+      <field type="uint16_t" name="task_id"/>
+      <field type="uint8_t" name="accepted"/>
+    </message>
+    <message id="25108" name="TASK_CONFIRM_REQUEST">
+      <description>Task confirm request</description>
+      <field type="uint8_t" name="sid"/>
+      <field type="uint16_t" name="task_id"/>
+      <field type="uint8_t" name="task_type"/>
+      <field type="float" name="lat"/>
+      <field type="float" name="lng"/>
+      <field type="float" name="alt"/>
+    </message>
+    <message id="25109" name="TASK_CONFIRM_RESPONSE">
+      <description>Task confirm response</description>
+      <field type="uint8_t" name="rid"/>
+      <field type="uint16_t" name="task_id"/>
+      <field type="uint8_t" name="confirmed"/>
+    </message>
   </messages>
 </mavlink>

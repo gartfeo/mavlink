@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<mavlink>
+  <messages>
+    <message id="25002" name="CHECK_IN">
+      <description>Check in</description>
+      <field type="uint8_t" name="sid"/>
+    </message>
+    <message id="25003" name="CHECK_OUT">
+      <description>Check out</description>
+      <field type="uint8_t" name="sid"/>
+      <field type="float" name="lat"/>
+      <field type="float" name="lng"/>
+      <field type="float" name="alt"/>
+    </message>
+    <message id="25104" name="AVAILABLE_TASK_REQUEST">
+      <description>Available task request</description>
+      <field type="uint8_t" name="count"/>
+      <field type="uint16_t[5]" name="task_id"/>
+      <field type="uint8_t[5]" name="task_type"/>
+      <field type="float[5]" name="lat"/>
+      <field type="float[5]" name="lng"/>
+      <field type="float[5]" name="alt"/>
+    </message>
+    <message id="25105" name="AVAILABLE_TASK_RESPONSE">
+      <description>Available task response</description>
+      <field type="uint8_t" name="target_system">System ID.</field>
+      <field type="uint8_t" name="target_component">Component ID.</field>
+      <field type="uint8_t" name="count"/>
+      <field type="uint16_t[5]" name="task_id"/>
+      <field type="float[5]" name="time"/>
+    </message>
+    <message id="25106" name="TASK_ASSIGN_REQUEST">
+      <description>Task assign request</description>
+      <field type="uint8_t" name="target_system">System ID.</field>
+      <field type="uint16_t" name="task_id"/>
+      <field type="uint8_t" name="task_type"/>
+      <field type="float" name="lat"/>
+      <field type="float" name="lng"/>
+      <field type="float" name="alt"/>
+    </message>
+    <message id="25107" name="TASK_ASSIGN_RESPONSE">
+      <description>Task assign response</description>
+      <field type="uint8_t" name="target_system">System ID.</field>
+      <field type="uint16_t" name="task_id"/>
+      <field type="uint8_t" name="accepted"/>
+    </message>
+    <message id="25108" name="TASK_CONFIRM_REQUEST">
+      <description>Task confirm request</description>
+      <field type="uint16_t" name="task_id"/>
+      <field type="uint8_t" name="task_type"/>
+      <field type="float" name="lat"/>
+      <field type="float" name="lng"/>
+      <field type="float" name="alt"/>
+    </message>
+    <message id="25109" name="TASK_CONFIRM_RESPONSE">
+      <description>Task confirm response</description>
+      <field type="uint8_t" name="target_system">System ID.</field>
+      <field type="uint16_t" name="task_id"/>
+      <field type="uint8_t" name="confirmed"/>
+    </message>
+  </messages>
+</mavlink>

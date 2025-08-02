@@ -3,6 +3,7 @@
   <messages>
     <message id="25002" name="CHECK_IN">
       <description>Check in</description>
+      <field type="uint64_t" name="time" units="us">Time of applicability of position (microseconds since UNIX epoch).</field>
     </message>
     <message id="25003" name="CHECK_OUT">
       <description>Check out</description>

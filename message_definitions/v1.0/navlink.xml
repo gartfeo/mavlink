@@ -23,7 +23,6 @@
     <message id="25105" name="AVAILABLE_TASK_RESPONSE">
       <description>Available task response</description>
       <field type="uint8_t" name="target_system">System ID.</field>
-      <field type="uint8_t" name="target_component">Component ID.</field>
       <field type="uint8_t" name="count"/>
       <field type="uint16_t[5]" name="task_id"/>
       <field type="float[5]" name="time"/>

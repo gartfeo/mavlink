@@ -3,11 +3,9 @@
   <messages>
     <message id="25002" name="CHECK_IN">
       <description>Check in</description>
-      <field type="uint8_t" name="sid"/>
     </message>
     <message id="25003" name="CHECK_OUT">
       <description>Check out</description>
-      <field type="uint8_t" name="sid"/>
       <field type="float" name="lat"/>
       <field type="float" name="lng"/>
       <field type="float" name="alt"/>

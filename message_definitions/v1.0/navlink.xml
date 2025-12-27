@@ -1,60 +1,161 @@
 <?xml version="1.0"?>
 <mavlink>
+  <!-- NavLink custom messages for swarm coordination -->
+  <!-- All messages include dedup/TTL metadata fields:
+       - boot_id: Random ID per process start (identifies sender instance)
+       - msg_seq: Monotonic counter per sender (unique per message)
+       - time_ms: Sender timestamp in milliseconds
+       - ttl_ms: Time-to-live in milliseconds
+  -->
   <messages>
+    <!-- Peer presence messages -->
     <message id="25002" name="CHECK_IN">
-      <description>Check in</description>
-      <field type="uint64_t" name="time" units="us">Time of applicability of position (microseconds since UNIX epoch).</field>
+      <description>Announce presence when joining swarm. Includes dedup/TTL metadata.</description>
+      <field type="uint32_t" name="boot_id">Random ID generated on process start, identifies sender instance.</field>
+      <field type="uint32_t" name="msg_seq">Monotonic sequence counter per sender.</field>
+      <field type="uint64_t" name="time_ms" units="ms">Sender timestamp in milliseconds since epoch.</field>
+      <field type="uint32_t" name="ttl_ms" units="ms">Time-to-live validity window in milliseconds.</field>
     </message>
+
     <message id="25003" name="CHECK_OUT">
-      <description>Check out</description>
-      <field type="float" name="lat"/>
-      <field type="float" name="lng"/>
-      <field type="float" name="alt"/>
+      <description>Announce departure from swarm with current location. Includes dedup/TTL metadata.</description>
+      <field type="uint32_t" name="boot_id">Random ID generated on process start, identifies sender instance.</field>
+      <field type="uint32_t" name="msg_seq">Monotonic sequence counter per sender.</field>
+      <field type="uint64_t" name="time_ms" units="ms">Sender timestamp in milliseconds since epoch.</field>
+      <field type="uint32_t" name="ttl_ms" units="ms">Time-to-live validity window in milliseconds.</field>
+      <field type="float" name="lat">Latitude in degrees.</field>
+      <field type="float" name="lng">Longitude in degrees.</field>
+      <field type="float" name="alt">Altitude in meters.</field>
     </message>
+
+    <message id="25004" name="SWARM_HEARTBEAT">
+      <description>Swarm heartbeat for peer liveness and clock synchronization. Expected rate 1Hz, TTL 5000ms. The time_ms field is critical for clock offset estimation.</description>
+      <field type="uint32_t" name="boot_id">Random ID generated on process start, identifies sender instance.</field>
+      <field type="uint32_t" name="msg_seq">Monotonic sequence counter per sender.</field>
+      <field type="uint64_t" name="time_ms" units="ms">Sender timestamp in milliseconds since epoch. Used for clock offset calculation.</field>
+      <field type="uint32_t" name="ttl_ms" units="ms">Time-to-live validity window in milliseconds.</field>
+      <field type="uint8_t" name="state">Current node state (0=IDLE, 1=SEARCHING, 2=GUIDING, etc.).</field>
+    </message>
+
+    <!-- Task coordination messages -->
     <message id="25104" name="AVAILABLE_TASK_REQUEST">
-      <description>Available task request</description>
-      <field type="uint8_t" name="count"/>
-      <field type="uint16_t[5]" name="task_id"/>
-      <field type="uint8_t[5]" name="task_type"/>
-      <field type="float[5]" name="lat"/>
-      <field type="float[5]" name="lng"/>
-      <field type="float[5]" name="alt"/>
+      <description>Broadcast available tasks to query which peers can handle them. Includes dedup/TTL metadata.</description>
+      <field type="uint32_t" name="boot_id">Random ID generated on process start, identifies sender instance.</field>
+      <field type="uint32_t" name="msg_seq">Monotonic sequence counter per sender.</field>
+      <field type="uint64_t" name="time_ms" units="ms">Sender timestamp in milliseconds since epoch.</field>
+      <field type="uint32_t" name="ttl_ms" units="ms">Time-to-live validity window in milliseconds.</field>
+      <field type="uint8_t" name="count">Number of tasks in this request (1-5).</field>
+      <field type="uint16_t[5]" name="task_id">Task IDs.</field>
+      <field type="uint8_t[5]" name="task_type">Task types (1=SMALL, 2=MEDIUM, 3=BIG, 4=HEAVY).</field>
+      <field type="float[5]" name="lat">Task latitudes in degrees.</field>
+      <field type="float[5]" name="lng">Task longitudes in degrees.</field>
+      <field type="float[5]" name="alt">Task altitudes in meters.</field>
     </message>
+
     <message id="25105" name="AVAILABLE_TASK_RESPONSE">
-      <description>Available task response</description>
-      <field type="uint8_t" name="target_system">System ID.</field>
-      <field type="uint8_t" name="count"/>
-      <field type="uint16_t[5]" name="task_id"/>
-      <field type="float[5]" name="time"/>
+      <description>Response indicating which tasks this peer can handle with ETA. Includes dedup/TTL metadata.</description>
+      <field type="uint32_t" name="boot_id">Random ID generated on process start, identifies sender instance.</field>
+      <field type="uint32_t" name="msg_seq">Monotonic sequence counter per sender.</field>
+      <field type="uint64_t" name="time_ms" units="ms">Sender timestamp in milliseconds since epoch.</field>
+      <field type="uint32_t" name="ttl_ms" units="ms">Time-to-live validity window in milliseconds.</field>
+      <field type="uint8_t" name="target_system">Target system ID (requester).</field>
+      <field type="uint8_t" name="count">Number of tasks this peer can handle.</field>
+      <field type="uint16_t[5]" name="task_id">Task IDs this peer can handle.</field>
+      <field type="float[5]" name="time">Estimated time to reach each task in minutes.</field>
     </message>
+
     <message id="25106" name="TASK_ASSIGN_REQUEST">
-      <description>Task assign request</description>
-      <field type="uint8_t" name="target_system">System ID.</field>
-      <field type="uint16_t" name="task_id"/>
-      <field type="uint8_t" name="task_type"/>
-      <field type="float" name="lat"/>
-      <field type="float" name="lng"/>
-      <field type="float" name="alt"/>
+      <description>Assign a task to a specific peer. Includes dedup/TTL metadata.</description>
+      <field type="uint32_t" name="boot_id">Random ID generated on process start, identifies sender instance.</field>
+      <field type="uint32_t" name="msg_seq">Monotonic sequence counter per sender.</field>
+      <field type="uint64_t" name="time_ms" units="ms">Sender timestamp in milliseconds since epoch.</field>
+      <field type="uint32_t" name="ttl_ms" units="ms">Time-to-live validity window in milliseconds.</field>
+      <field type="uint8_t" name="target_system">Target system ID (assigned peer).</field>
+      <field type="uint16_t" name="task_id">Task ID being assigned.</field>
+      <field type="uint8_t" name="task_type">Task type.</field>
+      <field type="float" name="lat">Task latitude in degrees.</field>
+      <field type="float" name="lng">Task longitude in degrees.</field>
+      <field type="float" name="alt">Task altitude in meters.</field>
     </message>
+
     <message id="25107" name="TASK_ASSIGN_RESPONSE">
-      <description>Task assign response</description>
-      <field type="uint8_t" name="target_system">System ID.</field>
-      <field type="uint16_t" name="task_id"/>
-      <field type="uint8_t" name="accepted"/>
+      <description>Accept or reject a task assignment. Includes dedup/TTL metadata.</description>
+      <field type="uint32_t" name="boot_id">Random ID generated on process start, identifies sender instance.</field>
+      <field type="uint32_t" name="msg_seq">Monotonic sequence counter per sender.</field>
+      <field type="uint64_t" name="time_ms" units="ms">Sender timestamp in milliseconds since epoch.</field>
+      <field type="uint32_t" name="ttl_ms" units="ms">Time-to-live validity window in milliseconds.</field>
+      <field type="uint8_t" name="target_system">Target system ID (assigner).</field>
+      <field type="uint16_t" name="task_id">Task ID being responded to.</field>
+      <field type="uint8_t" name="accepted">1 if accepted, 0 if rejected.</field>
     </message>
+
     <message id="25108" name="TASK_CONFIRM_REQUEST">
-      <description>Task confirm request</description>
-      <field type="uint16_t" name="task_id"/>
-      <field type="uint8_t" name="task_type"/>
-      <field type="float" name="lat"/>
-      <field type="float" name="lng"/>
-      <field type="float" name="alt"/>
+      <description>Request confirmation for a target from ground station. Includes dedup/TTL metadata.</description>
+      <field type="uint32_t" name="boot_id">Random ID generated on process start, identifies sender instance.</field>
+      <field type="uint32_t" name="msg_seq">Monotonic sequence counter per sender.</field>
+      <field type="uint64_t" name="time_ms" units="ms">Sender timestamp in milliseconds since epoch.</field>
+      <field type="uint32_t" name="ttl_ms" units="ms">Time-to-live validity window in milliseconds.</field>
+      <field type="uint16_t" name="task_id">Task ID to confirm.</field>
+      <field type="uint8_t" name="task_type">Task type.</field>
+      <field type="float" name="lat">Task latitude in degrees.</field>
+      <field type="float" name="lng">Task longitude in degrees.</field>
+      <field type="float" name="alt">Task altitude in meters.</field>
     </message>
+
     <message id="25109" name="TASK_CONFIRM_RESPONSE">
-      <description>Task confirm response</description>
-      <field type="uint8_t" name="target_system">System ID.</field>
-      <field type="uint16_t" name="task_id"/>
-      <field type="uint8_t" name="confirmed"/>
+      <description>Ground station response to confirmation request. Includes dedup/TTL metadata.</description>
+      <field type="uint32_t" name="boot_id">Random ID generated on process start, identifies sender instance.</field>
+      <field type="uint32_t" name="msg_seq">Monotonic sequence counter per sender.</field>
+      <field type="uint64_t" name="time_ms" units="ms">Sender timestamp in milliseconds since epoch.</field>
+      <field type="uint32_t" name="ttl_ms" units="ms">Time-to-live validity window in milliseconds.</field>
+      <field type="uint8_t" name="target_system">Target system ID (requester).</field>
+      <field type="uint16_t" name="task_id">Task ID being confirmed.</field>
+      <field type="uint8_t" name="confirmed">1 if confirmed, 0 if rejected.</field>
+    </message>
+
+    <!-- Slot management messages (for time-slot based coordination) -->
+    <message id="25200" name="SLOT_HEARTBEAT">
+      <description>Slot-based heartbeat for TDMA-style coordination. Expected rate 3Hz, TTL 1000ms.</description>
+      <field type="uint32_t" name="boot_id">Random ID generated on process start, identifies sender instance.</field>
+      <field type="uint32_t" name="msg_seq">Monotonic sequence counter per sender.</field>
+      <field type="uint64_t" name="time_ms" units="ms">Sender timestamp in milliseconds since epoch.</field>
+      <field type="uint32_t" name="ttl_ms" units="ms">Time-to-live validity window in milliseconds.</field>
+      <field type="uint8_t" name="slot_id">Current slot ID claimed by this node.</field>
+      <field type="uint8_t" name="state">Current node state.</field>
+    </message>
+
+    <message id="25201" name="SLOT_CLAIM">
+      <description>Claim a time slot for coordination. TTL 2000ms.</description>
+      <field type="uint32_t" name="boot_id">Random ID generated on process start, identifies sender instance.</field>
+      <field type="uint32_t" name="msg_seq">Monotonic sequence counter per sender.</field>
+      <field type="uint64_t" name="time_ms" units="ms">Sender timestamp in milliseconds since epoch.</field>
+      <field type="uint32_t" name="ttl_ms" units="ms">Time-to-live validity window in milliseconds.</field>
+      <field type="uint8_t" name="slot_id">Slot ID being claimed.</field>
+      <field type="uint8_t" name="priority">Priority level for conflict resolution.</field>
+    </message>
+
+    <message id="25202" name="VOTE_PHASE">
+      <description>Voting phase message for consensus protocols. TTL 6000ms.</description>
+      <field type="uint32_t" name="boot_id">Random ID generated on process start, identifies sender instance.</field>
+      <field type="uint32_t" name="msg_seq">Monotonic sequence counter per sender.</field>
+      <field type="uint64_t" name="time_ms" units="ms">Sender timestamp in milliseconds since epoch.</field>
+      <field type="uint32_t" name="ttl_ms" units="ms">Time-to-live validity window in milliseconds.</field>
+      <field type="uint8_t" name="phase">Current voting phase (0=PROPOSE, 1=VOTE, 2=COMMIT).</field>
+      <field type="uint16_t" name="round_id">Voting round identifier.</field>
+      <field type="uint16_t" name="proposal_id">Proposal being voted on.</field>
+      <field type="uint8_t" name="vote">Vote value (0=REJECT, 1=ACCEPT, 2=ABSTAIN).</field>
+    </message>
+
+    <message id="25300" name="SEARCH_STATUS">
+      <description>Search area status update. TTL 15000ms.</description>
+      <field type="uint32_t" name="boot_id">Random ID generated on process start, identifies sender instance.</field>
+      <field type="uint32_t" name="msg_seq">Monotonic sequence counter per sender.</field>
+      <field type="uint64_t" name="time_ms" units="ms">Sender timestamp in milliseconds since epoch.</field>
+      <field type="uint32_t" name="ttl_ms" units="ms">Time-to-live validity window in milliseconds.</field>
+      <field type="uint16_t" name="area_id">Search area identifier.</field>
+      <field type="uint8_t" name="status">Search status (0=NOT_STARTED, 1=IN_PROGRESS, 2=COMPLETED, 3=ABORTED).</field>
+      <field type="uint8_t" name="coverage_pct">Percentage of area covered (0-100).</field>
+      <field type="uint8_t" name="detections">Number of detections in this area.</field>
     </message>
   </messages>
 </mavlink>

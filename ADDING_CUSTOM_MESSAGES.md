@@ -10,7 +10,7 @@ Adding a custom MAVLink message involves updating 4 repositories:
 |------|------------|--------|---------|
 | 1 | `mavlink` | Plane-4.5/navlink | Define message in navlink.xml |
 | 2 | `ardupilot` | Plane-4.5 | Update submodule, rebuild pymavlink & SITL |
-| 3 | `c_library_v2` | Plane-4.5 | Copy navlink.xml for C library |
+| 3 | `c_library_v2` | Plane-4.5/navlink | Copy navlink.xml, regenerate C headers |
 | 4 | `mavlink-router` | Plane-4.5/navlink | Update submodule, rebuild router |
 
 ## Prerequisites
@@ -43,10 +43,14 @@ Location: `mavlink/message_definitions/v1.0/navlink.xml`
 ### Message ID Rules
 - Use IDs in range 25001-25999 for navlink messages
 - Check existing IDs to avoid conflicts:
-  - 25001: NAVLINK_TEST
   - 25002: CHECK_IN
   - 25003: CHECK_OUT
-  - 25104-25109: Task messages
+  - 25004: SWARM_HEARTBEAT
+  - 25104-25109: Task messages (AVAILABLE_TASK_*, TASK_ASSIGN_*, TASK_CONFIRM_*)
+  - 25200: SLOT_HEARTBEAT
+  - 25201: SLOT_CLAIM
+  - 25202: VOTE_PHASE
+  - 25300: SEARCH_STATUS
 
 ### Supported Field Types
 - `uint8_t`, `int8_t`
@@ -119,27 +123,38 @@ git push origin Plane-4.5
 
 ```bash
 cp mavlink/message_definitions/v1.0/navlink.xml \
-   c_library_v2/message_definitions/navlink.xml
+   mavlink-router/modules/mavlink_c_library_v2/message_definitions/navlink.xml
 ```
 
 ### 3.2 Regenerate C Headers
 
 ```bash
-# Find mavgen.py location: which mavgen.py or ~/.local/bin/mavgen.py
-mavgen.py --lang=C --wire-protocol=2.0 \
-    -o c_library_v2 \
-    c_library_v2/message_definitions/ardupilotmega.xml
+cd mavlink-router/modules/mavlink_c_library_v2
+
+# Regenerate ALL headers from ardupilotmega.xml
+~/.local/bin/mavgen.py --lang=C --wire-protocol=2.0 \
+    -o . \
+    message_definitions/ardupilotmega.xml
 ```
 
-**Important:** Generate from `ardupilotmega.xml` (which includes navlink.xml) to ensure consistent headers across all dialects.
+**CRITICAL:** You must regenerate from `ardupilotmega.xml` (which includes navlink.xml). This updates the `MAVLINK_MESSAGE_CRCS` table in `ardupilotmega/ardupilotmega.h`. If you only update `navlink/*.h` files, the CRC lookup table will be stale and mavlink-router will drop messages due to CRC mismatch.
 
-### 3.3 Commit and Push
+### 3.3 Verify CRCs Match
 
 ```bash
-cd c_library_v2
-git add message_definitions/navlink.xml navlink/
-git commit -m "Add YOUR_MESSAGE_NAME message"
-git push origin Plane-4.5
+cd mavlink
+python3 check_navlink_crcs.py
+```
+
+Expected output: `PASSED: All CRCs match!`
+
+### 3.4 Commit and Push
+
+```bash
+cd mavlink-router/modules/mavlink_c_library_v2
+git add -A
+git commit -m "Regenerate C headers with YOUR_MESSAGE_NAME"
+git push origin Plane-4.5/navlink
 ```
 
 ## Step 4: Update mavlink-router
@@ -181,13 +196,12 @@ git push origin Plane-4.5/navlink
 
 For WSL/local testing:
 ```bash
-ROUTER_BIN=/path/to/mavlink-router/build/src/mavlink-routerd \
-    ~/ardupilot/Tools/autotest/run_swarm.sh wsl 2
+~/ardupilot/Tools/autotest/run_swarm.sh wsl -n 2
 ```
 
 For Windows GCS testing:
 ```bash
-~/ardupilot/Tools/autotest/run_swarm.sh sim 2
+~/ardupilot/Tools/autotest/run_swarm.sh sim -n 2 -d 50
 ```
 
 ### 5.2 Run Test Script
@@ -225,7 +239,13 @@ Parameters: {'field1': value1, 'field2': value2}
 |---------|-------------|------------------|
 | `sim` | Windows GCS testing | `$WIN_IP:14500,14550,...` |
 | `sim_only` | Local only | `0.0.0.0:15000` |
-| `wsl` | WSL local testing | `0.0.0.0:14500,14550,...` |
+| `wsl` | WSL local testing | `127.0.0.1:14500,14550,...` |
+| `jsbsim` | JSBSim with Windows GCS | `$WIN_IP:14500,14550,...` |
+| `jsbsim_only` | JSBSim local only | `0.0.0.0:15000` |
+
+### Common Flags
+- `-n N` : Number of SITL instances (default 2)
+- `-d M` : Spacing between vehicles in meters (default 2)
 
 ## Troubleshooting
 
@@ -243,21 +263,42 @@ python3 setup.py install --user
 
 ### CRC Mismatch / Messages Not Routed
 
-If some messages work but others don't, the C headers may be inconsistent:
+If navlink messages are not being routed (standard MAVLink messages work but custom ones don't), the most likely cause is a **CRC mismatch** between pymavlink and mavlink-router's C headers.
+
+**Diagnose with CRC check script:**
 
 ```bash
-# Check for conflicting header files
-ls c_library_v2/ardupilotmega/mavlink_msg_your_message.h
-ls c_library_v2/navlink/mavlink_msg_your_message.h
+cd mavlink
+python3 check_navlink_crcs.py -v
+```
 
-# Remove old conflicting files and regenerate
-rm c_library_v2/ardupilotmega/mavlink_msg_*.h  # if duplicates exist
-python3 ~/.local/bin/mavgen.py --lang=C --wire-protocol=2.0 \
-    -o c_library_v2 \
-    c_library_v2/message_definitions/ardupilotmega.xml
+If you see output like:
+```
+pymavlink vs router: 1 error(s)
+  - CHECK_IN (ID 25002): CRC mismatch: pymavlink=29 vs router=131
+```
 
-# Rebuild mavlink-router
-ninja -C mavlink-router/build
+This means mavlink-router has stale headers. The `MAVLINK_MESSAGE_CRCS` table in `ardupilotmega.h` was not regenerated after navlink.xml was updated.
+
+**Fix:**
+
+```bash
+# 1. Copy updated navlink.xml
+cp mavlink/message_definitions/v1.0/navlink.xml \
+   mavlink-router/modules/mavlink_c_library_v2/message_definitions/
+
+# 2. Regenerate ALL C headers (not just navlink/)
+cd mavlink-router/modules/mavlink_c_library_v2
+~/.local/bin/mavgen.py --lang=C --wire-protocol=2.0 \
+    -o . message_definitions/ardupilotmega.xml
+
+# 3. Rebuild mavlink-router
+cd mavlink-router
+ninja -C build
+
+# 4. Verify fix
+cd mavlink
+python3 check_navlink_crcs.py
 ```
 
 ### SITL Bind Errors
@@ -268,7 +309,7 @@ pkill arduplane
 pkill mavlink-routerd
 
 # Restart swarm
-~/ardupilot/Tools/autotest/run_swarm.sh wsl 2
+~/ardupilot/Tools/autotest/run_swarm.sh wsl -n 2
 ```
 
 ### No Heartbeat Received
@@ -297,7 +338,10 @@ python3 test_navlink_msg.py MY_STATUS status=1 timestamp=12345
 
 ## File Locations
 
-| Repository | navlink.xml Location |
-|------------|----------------------|
-| `mavlink` | `message_definitions/v1.0/navlink.xml` |
-| `c_library_v2` | `message_definitions/navlink.xml` |
+| Repository | File | Purpose |
+|------------|------|---------|
+| `mavlink` | `message_definitions/v1.0/navlink.xml` | Message definitions (source of truth) |
+| `mavlink` | `check_navlink_crcs.py` | CRC consistency check script |
+| `mavlink` | `test_navlink_msg.py` | Message routing test script |
+| `c_library_v2` | `message_definitions/navlink.xml` | Copy for C header generation |
+| `c_library_v2` | `ardupilotmega/ardupilotmega.h` | Contains `MAVLINK_MESSAGE_CRCS` table |

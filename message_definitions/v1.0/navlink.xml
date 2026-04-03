@@ -47,6 +47,7 @@
       <field type="uint8_t" name="count">Number of tasks in this request (1-5).</field>
       <field type="uint16_t[5]" name="task_id">Task IDs.</field>
       <field type="uint8_t[5]" name="task_type">Task types (1=SMALL, 2=MEDIUM, 3=BIG, 4=HEAVY).</field>
+      <field type="uint8_t[5]" name="class_id">Detection class IDs (0=Tank..4=Person).</field>
       <field type="float[5]" name="lat">Task latitudes in degrees.</field>
       <field type="float[5]" name="lng">Task longitudes in degrees.</field>
       <field type="float[5]" name="alt">Task altitudes in meters.</field>
@@ -73,6 +74,7 @@
       <field type="uint8_t" name="target_system">Target system ID (assigned peer).</field>
       <field type="uint16_t" name="task_id">Task ID being assigned.</field>
       <field type="uint8_t" name="task_type">Task type.</field>
+      <field type="uint8_t" name="class_id">Detection class ID (0=Tank..4=Person).</field>
       <field type="float" name="lat">Task latitude in degrees.</field>
       <field type="float" name="lng">Task longitude in degrees.</field>
       <field type="float" name="alt">Task altitude in meters.</field>
@@ -97,6 +99,7 @@
       <field type="uint32_t" name="ttl_ms" units="ms">Time-to-live validity window in milliseconds.</field>
       <field type="uint16_t" name="task_id">Task ID to confirm.</field>
       <field type="uint8_t" name="task_type">Task type.</field>
+      <field type="uint8_t" name="class_id">Detection class ID (0=Tank..4=Person).</field>
       <field type="float" name="lat">Task latitude in degrees.</field>
       <field type="float" name="lng">Task longitude in degrees.</field>
       <field type="float" name="alt">Task altitude in meters.</field>

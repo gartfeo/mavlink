@@ -155,25 +155,31 @@ class SimpleVehicle:
         print(f"[SYS {self.source_system}] Closed")
 
 
+def _convert_scalar(value: str) -> Any:
+    """Convert a single string value to int, float, or bool."""
+    if value.lower() in ('true', 'false'):
+        return value.lower() == 'true'
+    try:
+        if '.' in value:
+            return float(value)
+        return int(value)
+    except ValueError:
+        return value
+
+
 def parse_params(params: List[str]) -> Dict[str, Any]:
-    """Parse key=value parameters from command line."""
+    """Parse key=value parameters from command line.
+    Comma-separated values are converted to lists (for array fields).
+    """
     result = {}
     for param in params:
         if '=' not in param:
             continue
         key, value = param.split('=', 1)
-        # Try to convert to appropriate type
-        try:
-            if '.' in value:
-                result[key] = float(value)
-            elif value.isdigit() or (value.startswith('-') and value[1:].isdigit()):
-                result[key] = int(value)
-            elif value.lower() in ('true', 'false'):
-                result[key] = value.lower() == 'true'
-            else:
-                result[key] = value
-        except ValueError:
-            result[key] = value
+        if ',' in value:
+            result[key] = [_convert_scalar(v) for v in value.split(',')]
+        else:
+            result[key] = _convert_scalar(value)
     return result
 
 
@@ -187,6 +193,15 @@ def create_message(msg_name: str, params: Dict[str, Any]):
         raise ValueError(f"Unknown message: {msg_name}. Use --list to see available messages.")
 
     msg_class = getattr(mavlink, class_name)
+
+    # Pad list parameters to match expected array lengths
+    if hasattr(msg_class, 'array_lengths') and hasattr(msg_class, 'ordered_fieldnames'):
+        for fname, alen in zip(msg_class.ordered_fieldnames, msg_class.array_lengths):
+            if alen > 0 and fname in params and isinstance(params[fname], list):
+                arr = params[fname]
+                if len(arr) < alen:
+                    pad = 0.0 if any(isinstance(v, float) for v in arr) else 0
+                    params[fname] = arr + [pad] * (alen - len(arr))
 
     # Create message with parameters
     try:
@@ -279,10 +294,19 @@ def main():
     vehicle2 = SimpleVehicle(f"udpin:0.0.0.0:{args.port2}", source_system=252)
 
     try:
-        if not vehicle1.connect(wait_heartbeat=True, timeout=10):
+        # Connect both vehicles concurrently to avoid UDP timeout issues
+        # (mavlink-router UDP client endpoints may stop sending if nobody
+        # receives the initial packets during sequential connection delays)
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+            f1 = executor.submit(vehicle1.connect, wait_heartbeat=True, timeout=10)
+            f2 = executor.submit(vehicle2.connect, wait_heartbeat=True, timeout=10)
+            ok1 = f1.result()
+            ok2 = f2.result()
+        if not ok1:
             print("Failed to connect to vehicle 1")
             return 1
-        if not vehicle2.connect(wait_heartbeat=True, timeout=10):
+        if not ok2:
             print("Failed to connect to vehicle 2")
             return 1
 

@@ -168,18 +168,16 @@ git checkout Plane-4.5
 git pull origin Plane-4.5
 ```
 
-### 4.2 Rebuild mavlink-router
+### 4.2 Rebuild and install mavlink-router
 
 ```bash
 cd mavlink-router
-ninja -C build
-```
-
-Or for fresh build:
-```bash
 meson setup build --wipe
 ninja -C build
+sudo ninja -C build install
 ```
+
+**NOTE:** Always use `meson setup build --wipe` when message definitions change. A plain `ninja -C build` may only do an incremental rebuild that misses header changes.
 
 ### 4.3 Commit Submodule Update
 
@@ -196,12 +194,12 @@ git push origin Plane-4.5/navlink
 
 For WSL/local testing:
 ```bash
-~/ardupilot/Tools/autotest/run_swarm.sh wsl -n 2
+ROUTER_BIN=~/mavlink-router/build/src/mavlink-routerd ~/ardupilot/Tools/autotest/run_swarm.sh wsl -n 2
 ```
 
 For Windows GCS testing:
 ```bash
-~/ardupilot/Tools/autotest/run_swarm.sh sim -n 2 -d 50
+ROUTER_BIN=~/mavlink-router/build/src/mavlink-routerd ~/ardupilot/Tools/autotest/run_swarm.sh sim -n 2 -d 50
 ```
 
 ### 5.2 Run Test Script
@@ -215,14 +213,38 @@ python3 test_navlink_msg.py --list
 # Test your new message
 python3 test_navlink_msg.py YOUR_MESSAGE_NAME field1=value1 field2=value2
 
-# Example: Test CHECK_IN
+# Example: Test CHECK_IN (broadcast, no target_system)
 python3 test_navlink_msg.py CHECK_IN boot_id=123 msg_seq=1 time_ms=1000 ttl_ms=5000
 
 # Example: Test CHECK_OUT
 python3 test_navlink_msg.py CHECK_OUT boot_id=123 msg_seq=1 time_ms=1000 ttl_ms=5000 lat=40.31 lng=44.45 alt=1500
+
+# Example: Test message with array fields (comma-separated values)
+python3 test_navlink_msg.py AVAILABLE_TASK_REQUEST boot_id=123 msg_seq=1 time_ms=1000 ttl_ms=5000 \
+    count=2 task_id=1,2 task_type=1,2 class_id=0,3 lat=40.31,40.32 lng=44.45,44.46 alt=1500,1600
+
+# Example: Test TASK_CONFIRM_REQUEST (broadcast, has class_id)
+python3 test_navlink_msg.py TASK_CONFIRM_REQUEST boot_id=123 msg_seq=1 time_ms=1000 ttl_ms=5000 \
+    task_id=42 task_type=2 class_id=3 lat=40.31 lng=44.45 alt=1500
 ```
 
-### 5.3 Expected Output
+### 5.3 Targeted vs Broadcast Messages
+
+Messages with a `target_system` field (marked with `MAV_MSG_ENTRY_FLAG_HAVE_TARGET_SYSTEM` in the CRC table) are delivered only to the matching sysid by the router. The test script listens on sysids 251/252, so **targeted messages with `target_system=1` will not be received by the test listener** — this is correct router behavior, not a failure.
+
+Broadcast messages (no `target_system` flag) are forwarded to all endpoints and will show `TEST PASSED`.
+
+| Message | Has target_system | Test behavior |
+|---------|-------------------|---------------|
+| CHECK_IN, CHECK_OUT, SWARM_HEARTBEAT | No | Broadcast, test passes |
+| AVAILABLE_TASK_REQUEST | No | Broadcast, test passes |
+| TASK_CONFIRM_REQUEST | No | Broadcast, test passes |
+| AVAILABLE_TASK_RESPONSE | Yes | Targeted, test won't receive unless target_system matches |
+| TASK_ASSIGN_REQUEST | Yes | Targeted, test won't receive unless target_system matches |
+| TASK_ASSIGN_RESPONSE | Yes | Targeted, test won't receive unless target_system matches |
+| TASK_CONFIRM_RESPONSE | Yes | Targeted, test won't receive unless target_system matches |
+
+### 5.4 Expected Output
 
 ```
 ============================================================
@@ -263,7 +285,9 @@ python3 setup.py install --user
 
 ### CRC Mismatch / Messages Not Routed
 
-If navlink messages are not being routed (standard MAVLink messages work but custom ones don't), the most likely cause is a **CRC mismatch** between pymavlink and mavlink-router's C headers.
+If navlink messages are not being routed (standard MAVLink messages work but custom ones don't), the most likely cause is a **CRC mismatch** between pymavlink and mavlink-router.
+
+There are two common causes:
 
 **Diagnose with CRC check script:**
 
@@ -272,15 +296,7 @@ cd mavlink
 python3 check_navlink_crcs.py -v
 ```
 
-If you see output like:
-```
-pymavlink vs router: 1 error(s)
-  - CHECK_IN (ID 25002): CRC mismatch: pymavlink=29 vs router=131
-```
-
-This means mavlink-router has stale headers. The `MAVLINK_MESSAGE_CRCS` table in `ardupilotmega.h` was not regenerated after navlink.xml was updated.
-
-**Fix:**
+If you see CRC mismatches, regenerate and rebuild:
 
 ```bash
 # 1. Copy updated navlink.xml
@@ -292,13 +308,29 @@ cd mavlink-router/modules/mavlink_c_library_v2
 ~/.local/bin/mavgen.py --lang=C --wire-protocol=2.0 \
     -o . message_definitions/ardupilotmega.xml
 
-# 3. Rebuild mavlink-router
+# 3. Full rebuild and install mavlink-router
 cd mavlink-router
+meson setup build --wipe
 ninja -C build
+sudo ninja -C build install
 
 # 4. Verify fix
 cd mavlink
 python3 check_navlink_crcs.py
+```
+
+**Symptom: CRCs pass but messages still not routed.** This means `mavlink-routerd` was not reinstalled after rebuild. Unmodified messages (e.g., CHECK_IN) route fine, but modified/new messages are silently dropped because the installed binary has stale CRCs. Re-run `sudo ninja -C build install` and restart the swarm.
+
+**Check for duplicate mavlink-routerd binaries.** There should be only one `mavlink-routerd` on the system. Multiple copies (e.g., one in `/usr/bin/` and another in `/usr/local/bin/`) can cause confusion — the wrong one may be picked up from `$PATH`.
+
+```bash
+# Find all copies
+which -a mavlink-routerd
+
+# Should return only one path. If you see two (e.g., /usr/bin/ and /bin/),
+# check if /bin is a symlink to /usr/bin — that's normal:
+ls -la /bin
+# lrwxrwxrwx 1 root root 7 ... /bin -> usr/bin
 ```
 
 ### SITL Bind Errors

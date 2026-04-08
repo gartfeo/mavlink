@@ -246,18 +246,38 @@ python3 setup.py install --user
 
 ### CRC Mismatch / Messages Not Routed
 
-If some messages work but others don't, the C headers may be inconsistent:
+If some messages work but others don't, the C headers may be inconsistent.
+Navlink message headers should only exist in `c_library_v2/navlink/`. If
+duplicates exist in `c_library_v2/ardupilotmega/`, the old CRCs take
+precedence and the router silently drops messages with mismatched CRCs.
 
 ```bash
-# Check for conflicting header files
-ls c_library_v2/ardupilotmega/mavlink_msg_your_message.h
-ls c_library_v2/navlink/mavlink_msg_your_message.h
+# Check for conflicting header files (navlink msgs should NOT be in ardupilotmega/)
+ls c_library_v2/ardupilotmega/mavlink_msg_check_in.h 2>/dev/null && echo "DUPLICATES FOUND"
+ls c_library_v2/ardupilotmega/mavlink_msg_task_assign_request.h 2>/dev/null && echo "DUPLICATES FOUND"
 
-# Remove old conflicting files and regenerate
-rm c_library_v2/ardupilotmega/mavlink_msg_*.h  # if duplicates exist
+# Remove only the navlink duplicates from ardupilotmega/ (do NOT rm mavlink_msg_*.h)
+cd c_library_v2/ardupilotmega
+rm -f mavlink_msg_check_in.h mavlink_msg_check_out.h mavlink_msg_swarm_heartbeat.h \
+     mavlink_msg_available_task_request.h mavlink_msg_available_task_response.h \
+     mavlink_msg_task_assign_request.h mavlink_msg_task_assign_response.h \
+     mavlink_msg_task_confirm_request.h mavlink_msg_task_confirm_response.h \
+     mavlink_msg_slot_heartbeat.h mavlink_msg_slot_claim.h \
+     mavlink_msg_vote_phase.h mavlink_msg_search_status.h
+cd ../..
+
+# Regenerate
 python3 ~/.local/bin/mavgen.py --lang=C --wire-protocol=2.0 \
     -o c_library_v2 \
     c_library_v2/message_definitions/ardupilotmega.xml
+
+# Verify CRCs match between pymavlink and c_library_v2
+python3 -c "
+from pymavlink.dialects.v20 import ardupilotmega as mav
+for msg_id, cls in sorted(mav.mavlink_map.items()):
+    if 25000 <= msg_id <= 26000:
+        print(f'{cls.__name__} (ID:{msg_id}): crc_extra={cls.crc_extra}')
+"
 
 # Rebuild mavlink-router
 ninja -C mavlink-router/build

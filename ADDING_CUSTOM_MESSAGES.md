@@ -8,10 +8,10 @@ Adding a custom MAVLink message involves updating 4 repositories:
 
 | Step | Repository | Branch | Purpose |
 |------|------------|--------|---------|
-| 1 | `mavlink` | Plane-4.5/navlink | Define message in navlink.xml |
-| 2 | `ardupilot` | Plane-4.5 | Update submodule, rebuild pymavlink & SITL |
-| 3 | `c_library_v2` | Plane-4.5 | Copy navlink.xml for C library |
-| 4 | `mavlink-router` | Plane-4.5/navlink | Update submodule, rebuild router |
+| 1 | `mavlink` | navlink-4.6 | Define message in navlink.xml |
+| 2 | `ardupilot` | ArduPilot-4.6 | Update submodule, rebuild pymavlink & SITL |
+| 3 | `c_library_v2` | ArduPilot-4.6 | Copy navlink.xml for C library |
+| 4 | `mavlink-router` | navlink-4.6 | Update submodule, rebuild router |
 
 ## Prerequisites
 
@@ -46,7 +46,10 @@ Location: `mavlink/message_definitions/v1.0/navlink.xml`
   - 25001: NAVLINK_TEST
   - 25002: CHECK_IN
   - 25003: CHECK_OUT
+  - 25004: SWARM_HEARTBEAT
   - 25104-25109: Task messages
+  - 25200-25202: Slot/voting messages (SLOT_HEARTBEAT, SLOT_CLAIM, VOTE_PHASE)
+  - 25300: SEARCH_STATUS
 
 ### Supported Field Types
 - `uint8_t`, `int8_t`
@@ -62,7 +65,7 @@ Location: `mavlink/message_definitions/v1.0/navlink.xml`
 cd mavlink
 git add message_definitions/v1.0/navlink.xml
 git commit -m "Add YOUR_MESSAGE_NAME message"
-git push origin Plane-4.5/navlink
+git push origin navlink-4.6
 ```
 
 ## Step 2: Update ArduPilot
@@ -72,8 +75,8 @@ git push origin Plane-4.5/navlink
 ```bash
 cd ardupilot/modules/mavlink
 git fetch origin
-git checkout Plane-4.5/navlink
-git pull origin Plane-4.5/navlink
+git checkout navlink-4.6
+git pull origin navlink-4.6
 ```
 
 ### 2.2 Reinstall pymavlink
@@ -110,7 +113,7 @@ cd ardupilot
 cd ardupilot
 git add modules/mavlink
 git commit -m "Update mavlink submodule with YOUR_MESSAGE_NAME"
-git push origin Plane-4.5
+git push origin ArduPilot-4.6
 ```
 
 ## Step 3: Update c_library_v2
@@ -139,7 +142,7 @@ mavgen.py --lang=C --wire-protocol=2.0 \
 cd c_library_v2
 git add message_definitions/navlink.xml navlink/
 git commit -m "Add YOUR_MESSAGE_NAME message"
-git push origin Plane-4.5
+git push origin ArduPilot-4.6
 ```
 
 ## Step 4: Update mavlink-router
@@ -149,8 +152,8 @@ git push origin Plane-4.5
 ```bash
 cd mavlink-router/modules/mavlink_c_library_v2
 git fetch origin
-git checkout Plane-4.5
-git pull origin Plane-4.5
+git checkout ArduPilot-4.6
+git pull origin ArduPilot-4.6
 ```
 
 ### 4.2 Rebuild mavlink-router
@@ -172,7 +175,7 @@ ninja -C build
 cd mavlink-router
 git add modules/mavlink_c_library_v2
 git commit -m "Update mavlink submodule with YOUR_MESSAGE_NAME"
-git push origin Plane-4.5/navlink
+git push origin navlink-4.6
 ```
 
 ## Step 5: Test the New Message

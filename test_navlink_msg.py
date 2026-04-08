@@ -279,10 +279,20 @@ def main():
     vehicle2 = SimpleVehicle(f"udpin:0.0.0.0:{args.port2}", source_system=252)
 
     try:
-        if not vehicle1.connect(wait_heartbeat=True, timeout=10):
+        # Connect both vehicles concurrently to avoid missing heartbeats
+        results = [None, None]
+        def connect_vehicle(idx, vehicle):
+            results[idx] = vehicle.connect(wait_heartbeat=True, timeout=15)
+        t1 = threading.Thread(target=connect_vehicle, args=(0, vehicle1))
+        t2 = threading.Thread(target=connect_vehicle, args=(1, vehicle2))
+        t1.start()
+        t2.start()
+        t1.join()
+        t2.join()
+        if not results[0]:
             print("Failed to connect to vehicle 1")
             return 1
-        if not vehicle2.connect(wait_heartbeat=True, timeout=10):
+        if not results[1]:
             print("Failed to connect to vehicle 2")
             return 1
 

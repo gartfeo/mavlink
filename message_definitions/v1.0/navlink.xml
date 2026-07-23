@@ -160,5 +160,16 @@
       <field type="uint8_t" name="coverage_pct">Percentage of area covered (0-100).</field>
       <field type="uint8_t" name="detections">Number of detections in this area.</field>
     </message>
+
+    <message id="25110" name="TASK_CONFIRM_ACK">
+      <description>Acknowledge receipt/processing of a task confirmation. Includes dedup/TTL metadata.</description>
+      <field type="uint32_t" name="boot_id">Random ID generated on process start, identifies sender instance.</field>
+      <field type="uint32_t" name="msg_seq">Monotonic sequence counter per sender.</field>
+      <field type="uint64_t" name="time_ms" units="ms">Sender timestamp in milliseconds since epoch.</field>
+      <field type="uint32_t" name="ttl_ms" units="ms">Time-to-live validity window in milliseconds.</field>
+      <field type="uint8_t" name="target_system">Target system ID (the original confirm requester).</field>
+      <field type="uint16_t" name="task_id">Task ID being acknowledged.</field>
+      <field type="uint8_t" name="ack_status">Ack status (0=received, 1=processing, 2=done).</field>
+    </message>
   </messages>
 </mavlink>

@@ -161,15 +161,30 @@
       <field type="uint8_t" name="detections">Number of detections in this area.</field>
     </message>
 
-    <message id="25110" name="TASK_CONFIRM_ACK">
-      <description>Acknowledge receipt/processing of a task confirmation. Includes dedup/TTL metadata.</description>
+
+    <message id="25110" name="SWARM_ACK">
+      <description>Generic acknowledgement of any RELIABLE_TYPES message by its dedup UID (sender_id, boot_id, msg_seq). Redefines the reserved 25110 slot (formerly TASK_CONFIRM_ACK) with a generic, message-agnostic ack. Includes dedup/TTL metadata.</description>
       <field type="uint32_t" name="boot_id">Random ID generated on process start, identifies sender instance.</field>
       <field type="uint32_t" name="msg_seq">Monotonic sequence counter per sender.</field>
       <field type="uint64_t" name="time_ms" units="ms">Sender timestamp in milliseconds since epoch.</field>
       <field type="uint32_t" name="ttl_ms" units="ms">Time-to-live validity window in milliseconds.</field>
-      <field type="uint8_t" name="target_system">Target system ID (the original confirm requester).</field>
-      <field type="uint16_t" name="task_id">Task ID being acknowledged.</field>
-      <field type="uint8_t" name="ack_status">Ack status (0=received, 1=processing, 2=done).</field>
+      <field type="uint8_t" name="target_system">Target system ID this ack is addressed to.</field>
+      <field type="uint32_t" name="ref_boot_id">boot_id of the message being acknowledged (dedup UID component).</field>
+      <field type="uint32_t" name="ref_msg_seq">msg_seq of the message being acknowledged (dedup UID component).</field>
+      <field type="uint16_t" name="ref_msg_type">MsgType value of the message being acknowledged.</field>
+      <field type="uint8_t" name="status">Ack status (0=received, 1=processing, 2=applied).</field>
+    </message>
+
+    <message id="25111" name="SWARM_REQUEST">
+      <description>Generic on-demand request: retransmit / resource (e.g. thumbnail) / force-confirm. Includes dedup/TTL metadata.</description>
+      <field type="uint32_t" name="boot_id">Random ID generated on process start, identifies sender instance.</field>
+      <field type="uint32_t" name="msg_seq">Monotonic sequence counter per sender.</field>
+      <field type="uint64_t" name="time_ms" units="ms">Sender timestamp in milliseconds since epoch.</field>
+      <field type="uint32_t" name="ttl_ms" units="ms">Time-to-live validity window in milliseconds.</field>
+      <field type="uint8_t" name="target_system">Target system ID this request is addressed to.</field>
+      <field type="uint8_t" name="request_type">Request type (0=RETRANSMIT, 1=RESOURCE, 2=FORCE_CONFIRM).</field>
+      <field type="uint16_t" name="subject_type">Subject discriminator: RETRANSMIT-&gt;wanted MsgType value; RESOURCE-&gt;resource kind (e.g. THUMBNAIL=1); FORCE_CONFIRM-&gt;unused (0).</field>
+      <field type="uint32_t" name="subject_id">Subject id: RESOURCE/FORCE_CONFIRM-&gt;target/task id; RETRANSMIT-&gt;0 or a specific seq.</field>
     </message>
   </messages>
 </mavlink>

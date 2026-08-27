@@ -186,5 +186,15 @@
       <field type="uint16_t" name="subject_type">Subject discriminator: RETRANSMIT-&gt;wanted MsgType value; RESOURCE-&gt;resource kind (e.g. THUMBNAIL=1); FORCE_CONFIRM-&gt;unused (0).</field>
       <field type="uint32_t" name="subject_id">Subject id: RESOURCE/FORCE_CONFIRM-&gt;target/task id; RETRANSMIT-&gt;0 or a specific seq.</field>
     </message>
+
+    <message id="25400" name="GYRO_CUMULATIVE_QUATERNION">
+      <description>Cumulative body rotation integrated in firmware from coning-corrected delta-angles taken from the RAW gyro BEFORE INS_GYRO_FILTER. WXYZ unit quaternion mapping current-body components into the streamed gyro instance's integration reference frame (that instance's body frame at its integration start). Carries no EKF or compass content; the absolute reference is arbitrary. Consumers use only RELATIVE rotations between two samples of one contiguous segment (same gyro_instance and reset_epoch, contiguous stream_seq). Request-only telemetry (SET_MESSAGE_INTERVAL, per-link); no default stream. Contract: NavPy docs/decisions/exact-frame-rotation.md. Autopilot-emitted telemetry: the navlink boot_id/msg_seq/time_ms/ttl_ms meta convention deliberately does not apply.</description>
+      <field type="uint64_t" name="sample_time_us" units="us">Boot-clock end time of the last physical IMU sample included in q (same clock family as ATTITUDE time_boot_ms). NOT the MAVLink send time.</field>
+      <field type="float[4]" name="q">Cumulative unit quaternion, WXYZ order, mapping current-body vector components into the streamed instance's integration reference frame.</field>
+      <field type="uint32_t" name="rotation_seq">Global accumulator publication counter identifying which accumulator state was sampled. Not expected to be consecutive within one stream.</field>
+      <field type="uint32_t" name="stream_seq">Per-MAVLink-channel emitted-message counter for gap and duplicate detection. Adjacency defined modulo 2^32.</field>
+      <field type="uint32_t" name="reset_epoch">Stream-continuity token: changes on any continuity break of the streamed instance (instance switch, FIFO reset, reinit, timestamp regression). Compare by equality only; a change invalidates relative rotations across it. Does not imply q restarted at identity.</field>
+      <field type="uint8_t" name="gyro_instance">Selected ArduPilot gyro instance the streamed quaternion belongs to.</field>
+    </message>
   </messages>
 </mavlink>

@@ -52,25 +52,14 @@
       <field type="float[5]" name="lng">Task longitudes in degrees.</field>
       <field type="float[5]" name="alt">Task altitudes in meters.</field>
       <extensions/>
-      <field type="uint8_t" name="lay_count">Docks in the layout of task lay_task_id: the docks one camera frame of the sender showed with it (0-6; 0: no layout). A receiver without these fields ignores them.</field>
-      <field type="uint16_t" name="lay_task_id">The task in task_id that the layout belongs to.</field>
-      <field type="uint16_t[6]" name="lay_dock_id">Each dock's task ID at the sender, left to right in the frame.</field>
-      <field type="uint16_t[6]" name="lay_u">Box centre from the frame's left edge, fraction of the frame width times 65535.</field>
-      <field type="uint16_t[6]" name="lay_v">Box centre from the frame's top edge, fraction of the frame height times 65535.</field>
-      <field type="uint16_t[6]" name="lay_w">Box width, fraction of the frame width times 65535; 0: no box.</field>
-      <field type="uint16_t[6]" name="lay_h">Box height, fraction of the frame height times 65535; 0: no box.</field>
-      <field type="uint8_t" name="lay_cam">Camera parts present (bitmask): 1 camera state, 2 position, 4 position altitude is AMSL, 8 roll and pitch, 16 heading, 32 gimbal, 64 age.</field>
-      <field type="int32_t" name="lay_lat" units="degE7">Camera latitude at the frame.</field>
-      <field type="int32_t" name="lay_lon" units="degE7">Camera longitude at the frame.</field>
-      <field type="float" name="lay_alt" units="m">Camera altitude at the frame (AMSL or above home, see lay_cam).</field>
-      <field type="float" name="lay_age" units="s">How long before this message the frame was published, sender clock.</field>
-      <field type="int16_t[2]" name="lay_att" units="cdeg">Aircraft roll and pitch at the frame.</field>
-      <field type="uint16_t" name="lay_hdg" units="cdeg">Aircraft compass heading at the frame, 0-35999. For coordination before parking only.</field>
-      <field type="int16_t[3]" name="lay_gimbal" units="cdeg">Gimbal or camera roll, pitch and yaw readback at the frame.</field>
-      <field type="int16_t[9]" name="lay_cb">Camera-to-body rotation, row major, times 32767.</field>
-      <field type="float[4]" name="lay_k">Camera intrinsics in pixels: fx, fy, cx, cy.</field>
-      <field type="uint8_t" name="lay_proj">Pixel projection: 0 pinhole, 1 spherical equiangular.</field>
-      <field type="uint16_t[2]" name="lay_wh">Frame width and height in pixels.</field>
+      <field type="uint8_t" name="gph_count">Docks in the dock graph of task gph_task_id: the docks the sender found around that task's dock, that dock among them (0-6; 0: no graph). A receiver without these fields ignores them.</field>
+      <field type="uint16_t" name="gph_task_id">The task in task_id that the graph belongs to.</field>
+      <field type="uint16_t[6]" name="gph_dock_id">Each dock's task ID at the sender.</field>
+      <field type="int16_t[6]" name="gph_north" units="dm">Each dock's position north of the task's dock (the task's lat, lng).</field>
+      <field type="int16_t[6]" name="gph_east" units="dm">Each dock's position east of the task's dock.</field>
+      <field type="float[2]" name="gph_finder" units="m">The sender's camera position, north and east of the task's dock, when it last saw it. Valid when gph_flags bit 1 is set.</field>
+      <field type="uint16_t" name="gph_sigma" units="dm">The sender's 1-sigma horizontal error of the task's position; 0: unknown.</field>
+      <field type="uint8_t" name="gph_flags">Bitmask: 1 gph_finder is valid. Positions hold the sender's compass heading: for coordination before parking only.</field>
     </message>
 
     <message id="25105" name="AVAILABLE_TASK_RESPONSE">

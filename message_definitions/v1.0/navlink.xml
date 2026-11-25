@@ -112,6 +112,8 @@
       <field type="float" name="lat">Task latitude in degrees.</field>
       <field type="float" name="lng">Task longitude in degrees.</field>
       <field type="float" name="alt">Task altitude in meters.</field>
+      <extensions/>
+      <field type="uint32_t" name="wait_ms" units="ms">The round's answer window as the sender opened it (AAS_NAV_CWT read once at the round's start; a later change of the parameter does not move it). 0: no wait. A receiver without this field ignores it.</field>
     </message>
 
     <message id="25109" name="TASK_CONFIRM_RESPONSE">
